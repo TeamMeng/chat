@@ -1,13 +1,15 @@
 mod config;
+mod error;
 mod handlers;
-
-pub use config::AppConfig;
-use handlers::*;
+mod models;
 
 use axum::{
     routing::{get, patch, post},
     Router,
 };
+pub use config::AppConfig;
+pub use error::AppError;
+use handlers::*;
 use std::{ops::Deref, sync::Arc};
 
 #[derive(Debug, Clone)]

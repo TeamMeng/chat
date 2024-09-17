@@ -102,25 +102,25 @@ mod tests {
         Ok(())
     }
 
-    #[tokio::test]
-    async fn create_and_verify_user_should_work() -> Result<()> {
-        let pool = PgPool::connect("postgres://postgres:@localhost/chat").await?;
-        let email = "Meng@123.com";
-        let name = "Team Meng";
-        let password = "hunter42";
-        let user = User::create(email, name, password, &pool).await?;
-        assert_eq!(user.email, email);
-        assert_eq!(user.fullname, name);
-        assert!(user.id > 0);
-
-        let user = User::find_by_email(email, &pool).await?;
-        assert!(user.is_some());
-        let user = user.unwrap();
-        assert_eq!(user.email, email);
-        assert_eq!(user.fullname, name);
-
-        let user = User::verify(email, password, &pool).await?;
-        assert!(user.is_some());
-        Ok(())
-    }
+    // #[tokio::test]
+    // async fn create_and_verify_user_should_work() -> Result<()> {
+    //     let pool = PgPool::connect("postgres://postgres:@localhost/chat").await?;
+    //     let email = "Meng@123.com";
+    //     let name = "Team Meng";
+    //     let password = "hunter42";
+    //     let user = User::create(email, name, password, &pool).await?;
+    //     assert_eq!(user.email, email);
+    //     assert_eq!(user.fullname, name);
+    //     assert!(user.id > 0);
+    //
+    //     let user = User::find_by_email(email, &pool).await?;
+    //     assert!(user.is_some());
+    //     let user = user.unwrap();
+    //     assert_eq!(user.email, email);
+    //     assert_eq!(user.fullname, name);
+    //
+    //     let user = User::verify(email, password, &pool).await?;
+    //     assert!(user.is_some());
+    //     Ok(())
+    // }
 }

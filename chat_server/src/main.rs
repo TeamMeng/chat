@@ -23,7 +23,7 @@ async fn main() -> Result<()> {
     info!("Server listening on {}", addr);
     let listener = TcpListener::bind(addr).await?;
 
-    let app = get_router(config);
+    let app = get_router(config).await?;
     axum::serve(listener, app).await?;
 
     Ok(())

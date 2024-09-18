@@ -1,2 +1,31 @@
 ### chat api
 GET http://localhost:6688/api/chat
+
+### signup user
+POST http://localhost:6688/api/signup
+Content-Type: application/json
+
+{
+    "fullname": "Team Meng",
+    "email": "Meng@123.com",
+    "password": "hunter42"
+}
+
+### signin user
+POST http://localhost:6688/api/signin
+Content-Type: application/json
+
+{
+    "email": "Meng@123.com",
+    "password": "hunter42"
+}
+
+
+### signin user -> password failed
+POST http://localhost:6688/api/signin
+Content-Type: application/json
+
+{
+    "email": "Meng@123.com",
+    "password": "123456"
+}

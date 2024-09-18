@@ -2,29 +2,35 @@ mod config;
 mod error;
 mod handlers;
 mod models;
+mod utils;
 
+use anyhow::Context;
 use axum::{
     routing::{get, patch, post},
     Router,
 };
 pub use config::AppConfig;
-pub use error::AppError;
+pub use error::{AppError, ErrorOutput};
 use handlers::*;
-use std::{ops::Deref, sync::Arc};
+use sqlx::PgPool;
+use std::{fmt::Debug, ops::Deref, sync::Arc};
+use utils::{DecodingKey, EncodingKey};
 
 #[derive(Debug, Clone)]
 pub(crate) struct AppState {
     inner: Arc<AppStateInner>,
 }
 
-#[derive(Debug)]
 #[allow(unused)]
 pub(crate) struct AppStateInner {
     pub(crate) config: AppConfig,
+    pub(crate) dk: DecodingKey,
+    pub(crate) ek: EncodingKey,
+    pub(crate) pool: PgPool,
 }
 
-pub fn get_router(config: AppConfig) -> Router {
-    let state = AppState::new(config);
+pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
+    let state = AppState::try_new(config).await?;
 
     let api = Router::new()
         .route("/signin", post(signin_handler))
@@ -38,17 +44,29 @@ pub fn get_router(config: AppConfig) -> Router {
         )
         .route("/chat/:id/messages", get(list_message_handler));
 
-    Router::new()
+    let app = Router::new()
         .route("/", get(index_handler))
         .nest("/api", api)
-        .with_state(state)
+        .with_state(state);
+
+    Ok(app)
 }
 
 impl AppState {
-    pub fn new(config: AppConfig) -> Self {
-        Self {
-            inner: Arc::new(AppStateInner { config }),
-        }
+    pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
+        let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
+        let ek = EncodingKey::load(&config.auth.sk).context("load ek failed")?;
+        let pool = PgPool::connect(&config.server.db_url)
+            .await
+            .context("connect to db failed")?;
+        Ok(Self {
+            inner: Arc::new(AppStateInner {
+                config,
+                dk,
+                ek,
+                pool,
+            }),
+        })
     }
 }
 
@@ -57,5 +75,13 @@ impl Deref for AppState {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+impl Debug for AppStateInner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("AppStateInner")
+            .field("config", &self.config)
+            .finish()
     }
 }

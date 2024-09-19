@@ -4,14 +4,12 @@ use crate::{
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct AuthOutput {
     token: String,
 }
 
-#[instrument]
 pub async fn signup_handler(
     State(state): State<AppState>,
     Json(input): Json<CreateUser>,
@@ -25,7 +23,6 @@ pub async fn signup_handler(
     Ok((StatusCode::CREATED, body))
 }
 
-#[instrument]
 pub async fn signin_handler(
     State(state): State<AppState>,
     Json(input): Json<SigninUser>,

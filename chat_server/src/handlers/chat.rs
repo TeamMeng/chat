@@ -1,22 +1,20 @@
-use axum::response::IntoResponse;
-use tracing::instrument;
+use crate::models::User;
+use axum::{response::IntoResponse, Extension};
+use tracing::info;
 
-#[instrument]
-pub async fn list_chat_handler() -> impl IntoResponse {
+pub async fn list_chat_handler(Extension(user): Extension<User>) -> impl IntoResponse {
+    info!("user: {:?}", user);
     "chat"
 }
 
-#[instrument]
 pub async fn create_chat_handler() -> impl IntoResponse {
     "create chat"
 }
 
-#[instrument]
 pub async fn delete_chat_handler() -> impl IntoResponse {
     "delete chat"
 }
 
-#[instrument]
 pub async fn update_chat_handler() -> impl IntoResponse {
     "update chat"
 }

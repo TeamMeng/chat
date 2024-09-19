@@ -1,7 +1,6 @@
 [workspace]
 members = ["chat_server", "notify_server"]
 resolver = "2"
-license = "MIT"
 
 [workspace.dependencies]
 anyhow = "1.0.82"

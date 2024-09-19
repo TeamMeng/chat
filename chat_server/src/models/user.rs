@@ -150,48 +150,43 @@ mod tests {
         assert!(verify_password(password, &password_hash)?);
         Ok(())
     }
+
+    #[tokio::test]
+    async fn create_duplicate_user_should_fail() -> Result<()> {
+        let pool = PgPool::connect("postgres://postgres:postgres@localhost:5432/chat").await?;
+        let email = "create_duplicate@123.com";
+        let fullname = "Team Meng";
+        let password = "hunter42";
+        let input = CreateUser::new(fullname, email, password);
+        User::create(&input, &pool).await?;
+        let ret = User::create(&input, &pool).await;
+        if let Err(AppError::EmailAlreadyExists(email)) = ret {
+            assert_eq!(email, input.email);
+        }
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn create_and_verify_user_should_work() -> Result<()> {
+        let pool = PgPool::connect("postgres://postgres:postgres@localhost:5432/chat").await?;
+        let email = "create_and_verify@123.com";
+        let fullname = "Team Meng";
+        let password = "hunter42";
+        let input = CreateUser::new(fullname, email, password);
+        let user = User::create(&input, &pool).await?;
+        assert_eq!(user.email, email);
+        assert_eq!(user.fullname, fullname);
+        assert!(user.id > 0);
+
+        let user = User::find_by_email(email, &pool).await?;
+        assert!(user.is_some());
+        let user = user.unwrap();
+        assert_eq!(user.email, email);
+        assert_eq!(user.fullname, fullname);
+
+        let input = SigninUser::new(email, password);
+        let user = User::verify(&input, &pool).await?;
+        assert!(user.is_some());
+        Ok(())
+    }
 }
-
-//     #[tokio::test]
-//     async fn create_duplicate_user_should_fail() -> Result<()> {
-//         let pool = PgPool::connect("postgres://postgres:@localhost/chat").await?;
-//         let email = "Meng@123.com";
-//         let fullname = "Team Meng";
-//         let password = "hunter42";
-//         let input = CreateUser::new(fullname, email, password);
-//         User::create(&input, &pool).await?;
-//         let ret = User::create(&input, &pool).await;
-//         match ret {
-//             Err(AppError::EmailAlreadyExists(email)) => {
-//                 assert_eq!(email, input.email);
-//             }
-//             _ => (),
-//         }
-//         Ok(())
-//     }
-// }
-
-//     #[tokio::test]
-//     async fn create_and_verify_user_should_work() -> Result<()> {
-//         let pool = PgPool::connect("postgres://postgres:@localhost/chat").await?;
-//         let email = "Meng@123.com";
-//         let fullname = "Team Meng";
-//         let password = "hunter42";
-//         let input = CreateUser::new(fullname, email, password);
-//         let user = User::create(&input, &pool).await?;
-//         assert_eq!(user.email, email);
-//         assert_eq!(user.fullname, fullname);
-//         assert!(user.id > 0);
-
-//         let user = User::find_by_email(email, &pool).await?;
-//         assert!(user.is_some());
-//         let user = user.unwrap();
-//         assert_eq!(user.email, email);
-//         assert_eq!(user.fullname, fullname);
-
-//         let input = SigninUser::new(&email, &password);
-//         let user = User::verify(&input, &pool).await?;
-//         assert!(user.is_some());
-//         Ok(())
-//     }
-// }

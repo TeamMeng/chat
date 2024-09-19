@@ -1,6 +1,6 @@
 server:
   post: 6688
-  db_url: postgres://postgres:postgres@localhost/chat
+  db_url: postgres://postgres:postgres@localhost:5432/chat
 auth:
   sk: |
     -----BEGIN PRIVATE KEY-----

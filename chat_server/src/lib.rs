@@ -3,6 +3,7 @@ mod error;
 mod handlers;
 mod middlewares;
 mod models;
+mod postgres;
 mod utils;
 
 use anyhow::Context;
@@ -15,6 +16,7 @@ pub use config::AppConfig;
 pub use error::{AppError, ErrorOutput};
 use handlers::*;
 use middlewares::{set_layer, verify_token};
+pub use postgres::TestPg;
 use sqlx::PgPool;
 use std::{fmt::Debug, ops::Deref, sync::Arc};
 use utils::{DecodingKey, EncodingKey};
@@ -88,5 +90,26 @@ impl Debug for AppStateInner {
         f.debug_struct("AppStateInner")
             .field("config", &self.config)
             .finish()
+    }
+}
+
+#[cfg(test)]
+impl AppState {
+    pub async fn new_for_test(config: AppConfig) -> Result<(TestPg, Self), AppError> {
+        use std::path::Path;
+        let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
+        let ek = EncodingKey::load(&config.auth.sk).context("load ek failed")?;
+        let server_url = config.server.db_url.split('/').next().unwrap();
+        let tdb = TestPg::new(server_url.to_string(), Path::new("../migrations"));
+        let pool = tdb.get_pool().await;
+        let state = Self {
+            inner: Arc::new(AppStateInner {
+                config,
+                ek,
+                dk,
+                pool,
+            }),
+        };
+        Ok((tdb, state))
     }
 }

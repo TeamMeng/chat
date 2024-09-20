@@ -99,7 +99,8 @@ impl AppState {
         use std::path::Path;
         let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
         let ek = EncodingKey::load(&config.auth.sk).context("load ek failed")?;
-        let server_url = config.server.db_url.split('/').next().unwrap();
+        let post = config.server.db_url.rfind('/').expect("invalid db_url");
+        let server_url = &config.server.db_url[..post];
         let tdb = TestPg::new(server_url.to_string(), Path::new("../migrations"));
         let pool = tdb.get_pool().await;
         let state = Self {

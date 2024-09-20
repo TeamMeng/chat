@@ -1,7 +1,7 @@
 -- Add migration script here
 -- create user table
 CREATE TABLE IF NOT EXISTS users (
-  id BIGSERIAL  PRIMARY KEY,
+  id BIGSERIAL PRIMARY KEY,
   fullname VARCHAR(64) NOT NULL,
   email VARCHAR(64) NOT NULL,
   -- hashed argon2 password, length 97

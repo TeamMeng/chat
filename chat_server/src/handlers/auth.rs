@@ -51,7 +51,7 @@ mod tests {
     async fn signin_should_work() -> Result<()> {
         let config = AppConfig::load()?;
         let (_tdb, state) = AppState::new_for_test(config).await?;
-        let input = CreateUser::new("Signin Meng", "Signin@123.com", "hunter42");
+        let input = CreateUser::new("none", "Signin Meng", "Signin@123.com", "hunter42");
         let ret = signup_handler(State(state), Json(input))
             .await?
             .into_response();
@@ -68,7 +68,7 @@ mod tests {
         let (_tdb, state) = AppState::new_for_test(config).await?;
         let email = "Signup@123.com";
         let password = "hunter42";
-        let input = CreateUser::new("Signup Meng", email, password);
+        let input = CreateUser::new("none", "Signup Meng", email, password);
         User::create(&input, &state.pool).await?;
         let input = SigninUser::new(email, password);
         let ret = signin_handler(State(state), Json(input))
@@ -87,7 +87,7 @@ mod tests {
         let (_tdb, state) = AppState::new_for_test(config).await?;
         let email = "Signup-failed@123.com";
         let password = "hunter42";
-        let input = CreateUser::new("Signup Meng", email, password);
+        let input = CreateUser::new("none", "Signup Meng", email, password);
         signup_handler(State(state.clone()), Json(input.clone())).await?;
 
         let ret = signup_handler(State(state), Json(input))

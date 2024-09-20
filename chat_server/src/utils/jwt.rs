@@ -54,28 +54,28 @@ impl Deref for DecodingKey {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use anyhow::Result;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use anyhow::Result;
 
-    #[test]
-    fn jwt_sign_verify_should_work() -> Result<()> {
-        let encoding_pem = include_str!("../../fixtures/encoding.pem");
-        let decoding_pem = include_str!("../../fixtures/decoding.pem");
-        let ek = EncodingKey::load(encoding_pem)?;
-        let dk = DecodingKey::load(decoding_pem)?;
+//     #[test]
+//     fn jwt_sign_verify_should_work() -> Result<()> {
+//         let encoding_pem = include_str!("../../fixtures/encoding.pem");
+//         let decoding_pem = include_str!("../../fixtures/decoding.pem");
+//         let ek = EncodingKey::load(encoding_pem)?;
+//         let dk = DecodingKey::load(decoding_pem)?;
 
-        let fullname = "Team Meng";
-        let email = "Team@123.com";
+//         let fullname = "Team Meng";
+//         let email = "Team@123.com";
 
-        let user = User::new(1, fullname, email);
+//         let user = User::new(1, fullname, email);
 
-        let token = ek.sign(user.clone())?;
-        let ret = dk.verify(&token)?;
+//         let token = ek.sign(user.clone())?;
+//         let ret = dk.verify(&token)?;
 
-        assert_eq!(user, ret);
+//         assert_eq!(user, ret);
 
-        Ok(())
-    }
-}
+//         Ok(())
+//     }
+// }

@@ -16,9 +16,6 @@ pub async fn signup_handler(
 ) -> Result<impl IntoResponse, AppError> {
     let user = User::create(&input, &state.pool).await?;
     let token = state.ek.sign(user)?;
-    // let mut header = HeaderMap::new();
-    // header.insert("X-Token", HeaderValue::from_str(&token)?);
-    // Ok((StatusCode::CREATED, header))
     let body = Json(AuthOutput { token });
     Ok((StatusCode::CREATED, body))
 }
@@ -66,10 +63,8 @@ mod tests {
     async fn signup_should_work() -> Result<()> {
         let config = AppConfig::load()?;
         let (_tdb, state) = AppState::new_for_test(config).await?;
-        let email = "Signup@123.com";
-        let password = "hunter42";
-        let input = CreateUser::new("none", "Signup Meng", email, password);
-        User::create(&input, &state.pool).await?;
+        let email = "Meng@123.com";
+        let password = "123456";
         let input = SigninUser::new(email, password);
         let ret = signin_handler(State(state), Json(input))
             .await?
@@ -85,10 +80,9 @@ mod tests {
     async fn signup_duplicate_should_409() -> Result<()> {
         let config = AppConfig::load()?;
         let (_tdb, state) = AppState::new_for_test(config).await?;
-        let email = "Signup-failed@123.com";
-        let password = "hunter42";
-        let input = CreateUser::new("none", "Signup Meng", email, password);
-        signup_handler(State(state.clone()), Json(input.clone())).await?;
+        let email = "Meng@123.com";
+        let password = "123456";
+        let input = CreateUser::new("acme", "Team Meng", email, password);
 
         let ret = signup_handler(State(state), Json(input))
             .await
@@ -97,7 +91,7 @@ mod tests {
         assert_eq!(ret.status(), StatusCode::CONFLICT);
         let body = ret.into_body().collect().await?.to_bytes();
         let ret: ErrorOutput = serde_json::from_slice(&body)?;
-        assert_eq!(ret.error, "email already exists: Signup-failed@123.com");
+        assert_eq!(ret.error, format!("email already exists: {}", email));
 
         Ok(())
     }

@@ -20,14 +20,13 @@ CREATE TYPE chat_type AS ENUM (
   'public_channel'
 );
 
-
 -- create chat table
 CREATE TABLE IF NOT EXISTS chats (
   id BIGSERIAL PRIMARY KEY,
-  name VARCHAR(128) NOT NULL UNIQUE,
+  name VARCHAR(64),
   type chat_type NOT NULL,
   -- user id list
-  members BIGINT[] NOT NULL,
+  members BIGINT [] NOT NULL,
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -37,7 +36,7 @@ CREATE TABLE IF NOT EXISTS messages (
   chat_id BIGINT NOT NULL REFERENCES chats(id),
   sender_id BIGINT NOT NULL REFERENCES users(id),
   content TEXT NOT NULL,
-  images TEXT[],
+  images TEXT [],
   created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 

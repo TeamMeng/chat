@@ -1,3 +1,4 @@
+use super::{ChatUser, User, Workspace};
 use crate::AppError;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
@@ -6,8 +7,6 @@ use argon2::{
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use std::mem;
-
-use super::{ChatUser, User, Workspace};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateUser {

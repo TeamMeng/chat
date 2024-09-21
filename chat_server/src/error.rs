@@ -4,6 +4,7 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
+use std::io;
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -33,6 +34,9 @@ pub enum AppError {
 
     #[error("not found: {0}")]
     NotFound(String),
+
+    #[error("io error: {0}")]
+    IoError(#[from] io::Error),
 }
 
 impl ErrorOutput {
@@ -53,6 +57,7 @@ impl IntoResponse for AppError {
             Self::EmailAlreadyExists(_) => StatusCode::CONFLICT,
             Self::CreateChatError(_) => StatusCode::BAD_REQUEST,
             Self::NotFound(_) => StatusCode::NOT_FOUND,
+            Self::IoError(_) => StatusCode::SERVICE_UNAVAILABLE,
         };
 
         (status, Json(ErrorOutput::new(self.to_string()))).into_response()

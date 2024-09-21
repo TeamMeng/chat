@@ -19,7 +19,7 @@ async fn main() -> Result<()> {
 
     let config = AppConfig::load()?;
 
-    let addr = format!("0.0.0.0:{}", config.server.post);
+    let addr = format!("0.0.0.0:{}", config.server.port);
     info!("Server listening on {}", addr);
     let listener = TcpListener::bind(addr).await?;
 

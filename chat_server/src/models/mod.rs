@@ -1,4 +1,5 @@
 mod chat;
+mod file;
 mod user;
 mod workspace;
 
@@ -53,4 +54,10 @@ pub enum ChatType {
     Group,
     PrivateChannel,
     PublicChannel,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChatFile {
+    pub ext: String,
+    pub hash: String,
 }

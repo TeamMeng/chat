@@ -1,8 +1,7 @@
+use super::REQUEST_ID_HEADER;
 use axum::{extract::Request, http::HeaderValue, middleware::Next, response::Response};
 use tracing::warn;
 use uuid::Uuid;
-
-use super::REQUEST_ID_HEADER;
 
 pub async fn set_request_id(mut req: Request, next: Next) -> Response {
     // if x-request-id exists, do nothing, otherwise generate a new one

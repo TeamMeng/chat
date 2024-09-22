@@ -5,7 +5,7 @@ Content-Type: application/json
 {
     "workspace": "Acme",
     "fullname": "Team Alice",
-    "email": "Meng@123.com",
+    "email": "Alice@123.com",
     "password": "hunter42"
 }
 
@@ -16,7 +16,7 @@ Content-Type: application/json
 {
     "workspace": "Acme",
     "fullname": "Team Meng",
-    "email": "Alice@123.com",
+    "email": "Meng@123.com",
     "password": "hunter42"
 }
 
@@ -78,4 +78,18 @@ Hello, World!
 
 ### get files
 GET http://localhost:6688/api/files/1/005/efb/4c143b8d531411ecd78f2effa226bfd24d.txt
+Authorization: Bearer {{token}}
+
+###
+POST http://localhost:6688/api/chats/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "content": "Hello World!",
+    "files": []
+}
+
+### get messages
+GET http://localhost:6688/api/chats/1/messages?limit=6&last_id=5
 Authorization: Bearer {{token}}

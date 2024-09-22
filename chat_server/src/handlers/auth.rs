@@ -1,5 +1,5 @@
 use crate::{
-    models::{CreateUser, SigninUser, User},
+    models::{CreateUser, SigninUser},
     AppError, AppState, ErrorOutput,
 };
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
@@ -14,7 +14,7 @@ pub async fn signup_handler(
     State(state): State<AppState>,
     Json(input): Json<CreateUser>,
 ) -> Result<impl IntoResponse, AppError> {
-    let user = User::create(&input, &state.pool).await?;
+    let user = state.user_create(&input).await?;
     let token = state.ek.sign(user)?;
     let body = Json(AuthOutput { token });
     Ok((StatusCode::CREATED, body))
@@ -24,7 +24,7 @@ pub async fn signin_handler(
     State(state): State<AppState>,
     Json(input): Json<SigninUser>,
 ) -> Result<impl IntoResponse, AppError> {
-    let user = User::verify(&input, &state.pool).await?;
+    let user = state.user_verify(&input).await?;
     match user {
         Some(user) => {
             let token = state.ek.sign(user)?;
@@ -40,14 +40,12 @@ pub async fn signin_handler(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::AppConfig;
     use anyhow::Result;
     use http_body_util::BodyExt;
 
     #[tokio::test]
     async fn signin_should_work() -> Result<()> {
-        let config = AppConfig::load()?;
-        let (_tdb, state) = AppState::new_for_test(config).await?;
+        let (_tdb, state) = AppState::new_for_test().await?;
         let input = CreateUser::new("none", "Signin Meng", "Signin@123.com", "hunter42");
         let ret = signup_handler(State(state), Json(input))
             .await?
@@ -61,8 +59,7 @@ mod tests {
 
     #[tokio::test]
     async fn signup_should_work() -> Result<()> {
-        let config = AppConfig::load()?;
-        let (_tdb, state) = AppState::new_for_test(config).await?;
+        let (_tdb, state) = AppState::new_for_test().await?;
         let email = "Meng@123.com";
         let password = "123456";
         let input = SigninUser::new(email, password);
@@ -78,8 +75,7 @@ mod tests {
 
     #[tokio::test]
     async fn signup_duplicate_should_409() -> Result<()> {
-        let config = AppConfig::load()?;
-        let (_tdb, state) = AppState::new_for_test(config).await?;
+        let (_tdb, state) = AppState::new_for_test().await?;
         let email = "Meng@123.com";
         let password = "123456";
         let input = CreateUser::new("acme", "Team Meng", email, password);
@@ -98,8 +94,7 @@ mod tests {
 
     #[tokio::test]
     async fn signup_with_non_exist_user_should_403() -> Result<()> {
-        let config = AppConfig::load()?;
-        let (_tdb, state) = AppState::new_for_test(config).await?;
+        let (_tdb, state) = AppState::new_for_test().await?;
         let email = "non-exist@123.com";
         let password = "hunter42";
         let input = SigninUser::new(email, password);

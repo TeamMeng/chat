@@ -1,5 +1,5 @@
 use crate::{
-    models::{ChatFile, CreateMessage, ListMessage, User},
+    models::{ChatFile, CreateMessage, ListMessage},
     AppError, AppState,
 };
 use axum::{
@@ -8,6 +8,7 @@ use axum::{
     response::IntoResponse,
     Extension, Json,
 };
+use chat_core::User;
 use tokio::fs;
 use tracing::{info, warn};
 

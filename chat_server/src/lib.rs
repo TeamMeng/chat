@@ -12,10 +12,11 @@ use axum::{
     routing::{get, post},
     Router,
 };
+use chat_core::{set_layer, verify_token, TokenVerify, User};
 pub use config::AppConfig;
 pub use error::{AppError, ErrorOutput};
 use handlers::*;
-use middlewares::{set_layer, verify_chat, verify_token};
+use middlewares::verify_chat;
 pub use postgres::TestPg;
 use sqlx::PgPool;
 use std::{fmt::Debug, ops::Deref, sync::Arc};
@@ -55,7 +56,7 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
         .nest("/chats", chat)
         .route("/upload", post(upload_handler))
         .route("/files/:ws_id/*path", get(file_handler))
-        .layer(from_fn_with_state(state.clone(), verify_token))
+        .layer(from_fn_with_state(state.clone(), verify_token::<AppState>))
         // routes doesn't need token verification
         .route("/signin", post(signin_handler))
         .route("/signup", post(signup_handler));
@@ -94,6 +95,14 @@ impl Deref for AppState {
 
     fn deref(&self) -> &Self::Target {
         &self.inner
+    }
+}
+
+impl TokenVerify for AppState {
+    type Error = AppError;
+
+    fn verify(&self, token: &str) -> Result<User, Self::Error> {
+        self.dk.verify(token)
     }
 }
 

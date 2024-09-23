@@ -7,18 +7,13 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-tower-http = { version = "0.6.0", features = [
-    "compression-full",
-    "trace",
-    "fs",
-] }
 anyhow = { workspace = true }
 argon2 = { version = "0.5.3", features = ["std"] }
 axum = { workspace = true }
-axum-extra = { version = "0.9.3", features = ["typed-header"] }
-chrono = { version = "0.4.38", features = ["serde"] }
+axum-extra = { workspace = true }
+chrono = { workspace = true }
 hex = "0.4.3"
-jwt-simple = "0.12.10"
+jwt-simple = { workspace = true }
 serde = { workspace = true }
 serde_json = "1.0.128"
 serde_yaml = { workspace = true }
@@ -26,12 +21,14 @@ sha1 = "0.10.6"
 sqlx = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true }
-tower = { version = "0.5.1", features = ["util"] }
+tower = { workspace = true }
+tower-http = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-uuid = { version = "1.10.0", features = ["v7", "serde", "v4"] }
 mime_guess = "2.0.5"
 tokio-util = { version = "0.7.12", features = ["io"] }
+chat-core = { workspace = true }
+uuid = { workspace = true }
 
 [dev-dependencies]
 http-body-util = "0.1.2"

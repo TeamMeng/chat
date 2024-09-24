@@ -1,17 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SSE handler</title>
-</head>
-<body>
-    <h1>SSE sent Events</h1>
-    <script lang="javascript">
-        var source = new EventSource("/events");
-        source.onmessage = function(event) {
-            console.log("Got:", event.data);
-        };
-    </script>
-</body>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>SSE handler</title>
+    </head>
+    <body>
+        <h1>SSE sent Events</h1>
+        <script lang="javascript">
+            var source = new EventSource("/events");
+            source.onmessage = function (event) {
+                console.log("Got:", event.data);
+            };
+            source.addEventListener("NewChat", function(event) {
+                console.log("NewChat", event.data);
+            });
+            source.addEventListener("AddToChat", function(event) {
+                console.log("AddToChat", event.data);
+            });
+            source.addEventListener("RemoveFromChat", function(event) {
+                console.log("RemoveFromChat", event.data);
+            });
+            source.addEventListener("NewMessage", function(event) {
+                console.log("NewMessage", event.data);
+            });
+        </script>
+    </body>
 </html>

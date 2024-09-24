@@ -21,9 +21,9 @@ async fn main() -> Result<()> {
     info!("Server listening on {}", addr);
     let listener = TcpListener::bind(addr).await?;
 
-    setup_pg_listener().await?;
+    let (app, state) = get_router();
 
-    let app = get_router();
+    setup_pg_listener(state).await?;
 
     axum::serve(listener, app).await?;
 

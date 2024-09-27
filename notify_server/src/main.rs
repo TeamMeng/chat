@@ -1,5 +1,5 @@
 use anyhow::Result;
-use notify_server::{get_router, setup_pg_listener};
+use notify_server::{get_router, AppConfig};
 use tokio::net::TcpListener;
 use tracing::{info, level_filters::LevelFilter};
 use tracing_subscriber::{
@@ -21,9 +21,8 @@ async fn main() -> Result<()> {
     info!("Server listening on {}", addr);
     let listener = TcpListener::bind(addr).await?;
 
-    let (app, state) = get_router();
-
-    setup_pg_listener(state).await?;
+    let config = AppConfig::load()?;
+    let app = get_router(config).await?;
 
     axum::serve(listener, app).await?;
 

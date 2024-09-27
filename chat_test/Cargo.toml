@@ -1,0 +1,23 @@
+[package]
+name = "chat_test"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+[dev-dependencies]
+chat-server = { workspace = true, features = ["test-util"] }
+chat-core = { workspace = true }
+notify-server = { workspace = true }
+reqwest = { version = "0.12.7", default-features = false, features = [
+    "rustls-tls",
+    "json",
+    "multipart",
+    "stream",
+] }
+tokio = { workspace = true }
+axum = { workspace = true }
+anyhow = { workspace = true }
+serde = { workspace = true }
+serde_json = "1.0.128"
+reqwest-eventsource = "0.6.0"
+futures = "0.3.30"

@@ -3,42 +3,40 @@ mod error;
 mod handlers;
 mod middlewares;
 mod models;
-mod postgres;
-mod utils;
 
 use anyhow::Context;
+use chat_core::{set_layer, verify_token, DecodingKey, EncodingKey, TokenVerify, User};
+use handlers::*;
+use middlewares::verify_chat;
+use sqlx::PgPool;
+use std::{fmt, ops::Deref, sync::Arc};
+use tokio::fs;
+
+pub use error::{AppError, ErrorOutput};
+pub use models::*;
+
 use axum::{
     middleware::from_fn_with_state,
     routing::{get, post},
     Router,
 };
-use chat_core::{set_layer, verify_token, TokenVerify, User};
+
 pub use config::AppConfig;
-pub use error::{AppError, ErrorOutput};
-use handlers::*;
-use middlewares::verify_chat;
-pub use postgres::TestPg;
-use sqlx::PgPool;
-use std::{fmt::Debug, ops::Deref, sync::Arc};
-use tokio::fs;
-use utils::{DecodingKey, EncodingKey};
 
 #[derive(Debug, Clone)]
-pub(crate) struct AppState {
+pub struct AppState {
     inner: Arc<AppStateInner>,
 }
 
 #[allow(unused)]
-pub(crate) struct AppStateInner {
+pub struct AppStateInner {
     pub(crate) config: AppConfig,
     pub(crate) dk: DecodingKey,
     pub(crate) ek: EncodingKey,
     pub(crate) pool: PgPool,
 }
 
-pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
-    let state = AppState::try_new(config).await?;
-
+pub async fn get_router(state: AppState) -> Result<Router, AppError> {
     let chat = Router::new()
         .route(
             "/:id",
@@ -69,27 +67,7 @@ pub async fn get_router(config: AppConfig) -> Result<Router, AppError> {
     Ok(set_layer(app))
 }
 
-impl AppState {
-    pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
-        fs::create_dir_all(&config.server.base_dir)
-            .await
-            .context("create base_dir failed")?;
-        let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
-        let ek = EncodingKey::load(&config.auth.sk).context("load ek failed")?;
-        let pool = PgPool::connect(&config.server.db_url)
-            .await
-            .context("connect to db failed")?;
-        Ok(Self {
-            inner: Arc::new(AppStateInner {
-                config,
-                dk,
-                ek,
-                pool,
-            }),
-        })
-    }
-}
-
+// 当我调用 state.config => state.inner.config
 impl Deref for AppState {
     type Target = AppStateInner;
 
@@ -102,56 +80,84 @@ impl TokenVerify for AppState {
     type Error = AppError;
 
     fn verify(&self, token: &str) -> Result<User, Self::Error> {
-        self.dk.verify(token)
+        Ok(self.dk.verify(token)?)
     }
 }
 
-impl Debug for AppStateInner {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("AppStateInner")
-            .field("config", &self.config)
-            .finish()
-    }
-}
-
-#[cfg(test)]
 impl AppState {
-    pub async fn new_for_test() -> Result<(TestPg, Self), AppError> {
-        let config = AppConfig::load()?;
+    pub async fn try_new(config: AppConfig) -> Result<Self, AppError> {
+        fs::create_dir_all(&config.server.base_dir)
+            .await
+            .context("create base_dir failed")?;
         let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
-        let ek = EncodingKey::load(&config.auth.sk).context("load ek failed")?;
-        let post = config.server.db_url.rfind('/').expect("invalid db_url");
-        let server_url = &config.server.db_url[..post];
-        let (tdb, pool) = get_test_pool(Some(server_url)).await?;
-        let state = Self {
+        let ek = EncodingKey::load(&config.auth.sk).context("load sk failed")?;
+        let pool = PgPool::connect(&config.server.db_url)
+            .await
+            .context("connect to db failed")?;
+        Ok(Self {
             inner: Arc::new(AppStateInner {
                 config,
                 ek,
                 dk,
                 pool,
             }),
-        };
-        Ok((tdb, state))
+        })
     }
 }
 
-#[cfg(test)]
-pub async fn get_test_pool(url: Option<&str>) -> anyhow::Result<(TestPg, PgPool)> {
-    use sqlx::Executor;
-    let url = match url {
-        Some(url) => url.to_string(),
-        None => "postgres://postgres:postgres@localhost:5432".to_string(),
-    };
-    let tdb = TestPg::new(url, std::path::Path::new("../migrations"));
-    let pool = tdb.get_pool().await;
-    // run prepared sql to insert data dat
-    let sql = include_str!("../fixtures/test.sql").split(';');
-    let mut ts = pool.begin().await.expect("begin transaction failed");
-    for s in sql {
-        if !s.trim().is_empty() {
-            ts.execute(s).await.expect("execute sql failed");
+impl fmt::Debug for AppStateInner {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("AppStateInner")
+            .field("config", &self.config)
+            .finish()
+    }
+}
+
+#[cfg(feature = "test-util")]
+mod test_util {
+    use super::*;
+    use sqlx::{Executor, PgPool};
+    use sqlx_db_tester::TestPg;
+
+    impl AppState {
+        pub async fn new_for_test() -> Result<(TestPg, Self), AppError> {
+            let config = AppConfig::load()?;
+            let dk = DecodingKey::load(&config.auth.pk).context("load pk failed")?;
+            let ek = EncodingKey::load(&config.auth.sk).context("load sk failed")?;
+            let post = config.server.db_url.rfind('/').expect("invalid db_url");
+            let server_url = &config.server.db_url[..post];
+            let (tdb, pool) = get_test_pool(Some(server_url)).await;
+            let state = Self {
+                inner: Arc::new(AppStateInner {
+                    config,
+                    ek,
+                    dk,
+                    pool,
+                }),
+            };
+            Ok((tdb, state))
         }
     }
-    ts.commit().await.expect("commit transaction failed");
-    Ok((tdb, pool))
+
+    pub async fn get_test_pool(url: Option<&str>) -> (TestPg, PgPool) {
+        let url = match url {
+            Some(url) => url.to_string(),
+            None => "postgres://postgres:postgres@localhost:5432".to_string(),
+        };
+        let tdb = TestPg::new(url, std::path::Path::new("../migrations"));
+        let pool = tdb.get_pool().await;
+
+        // run prepared sql to insert test dat
+        let sql = include_str!("../fixtures/test.sql").split(';');
+        let mut ts = pool.begin().await.expect("begin transaction failed");
+        for s in sql {
+            if s.trim().is_empty() {
+                continue;
+            }
+            ts.execute(s).await.expect("execute sql failed");
+        }
+        ts.commit().await.expect("commit transaction failed");
+
+        (tdb, pool)
+    }
 }

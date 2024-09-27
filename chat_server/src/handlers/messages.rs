@@ -4,7 +4,7 @@ use crate::{
 };
 use axum::{
     extract::{Multipart, Path, Query, State},
-    http::HeaderMap,
+    http::{HeaderMap, StatusCode},
     response::IntoResponse,
     Extension, Json,
 };
@@ -20,7 +20,7 @@ pub async fn send_message_handler(
 ) -> Result<impl IntoResponse, AppError> {
     let msg = state.message_create(input, id, user.id as _).await?;
 
-    Ok(Json(msg))
+    Ok((StatusCode::CREATED, Json(msg)))
 }
 
 pub async fn list_message_handler(

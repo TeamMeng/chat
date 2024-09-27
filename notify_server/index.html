@@ -8,7 +8,8 @@
     <body>
         <h1>SSE sent Events</h1>
         <script lang="javascript">
-            var source = new EventSource("/events");
+            let token = 'eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJpYXQiOjE3MjczOTgzMzIsImV4cCI6MTcyODAwMzEzMiwibmJmIjoxNzI3Mzk4MzMyLCJpc3MiOiJjaGF0X3NlcnZlciIsImF1ZCI6ImNoYXRfd2ViIiwiaWQiOjIsIndzX2lkIjoxLCJmdWxsbmFtZSI6IlRlYW0gTWVuZyIsImVtYWlsIjoiTWVuZ0AxMjMuY29tIiwiY3JlYXRlZF9hdCI6IjIwMjQtMDktMjdUMDA6NTI6MTAuNTM3MzQ2WiJ9.sviHiyo2uqtOd03oxyySJ_YOzsy_9nJIgQyeg2ZT3bS1_NgD4X8HWcpUvPNs_iWxlkXGqJjLC9Khl_NsOGGfCw';
+            let source = new EventSource(`/events?access_token=${token}`);
             source.onmessage = function (event) {
                 console.log("Got:", event.data);
             };

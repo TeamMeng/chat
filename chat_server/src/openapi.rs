@@ -27,8 +27,9 @@ pub(crate) trait OpenApiRouter {
             list_message_handler,
         ),
         components(
-            schemas(User, Chat, ChatType, ChatUser, Message, Workspace, CreateUser,
-                SigninUser, CreateChat, CreateMessage, ListMessage, AuthOutput, ErrorOutput),
+            schemas(User, Chat, ChatType, ChatUser, Message, Workspace, SigninUser,
+                CreateUser, CreateChat, CreateMessage, ListMessage,
+                AuthOutput, ErrorOutput),
         ),
         modifiers(&SecurityAddon),
         tags(

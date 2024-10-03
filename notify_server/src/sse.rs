@@ -9,6 +9,7 @@ use futures::Stream;
 use std::{convert::Infallible, time::Duration};
 use tokio::sync::broadcast;
 use tokio_stream::{wrappers::BroadcastStream, StreamExt};
+use tracing::debug;
 
 const CHANNEL_CAPACITY: usize = 256;
 
@@ -35,6 +36,7 @@ pub(crate) async fn sse_handler(
             AppEvent::NewMessage(_) => "NewMessage",
         };
         let v = serde_json::to_string(&v).expect("failed to serialize event");
+        debug!("Sending event {}: {:?}", name, v);
         Ok(Event::default().data(v).event(name))
     });
 

@@ -7,6 +7,7 @@ use utoipa::{IntoParams, ToSchema};
 #[derive(Debug, ToSchema, Serialize, Deserialize)]
 pub struct CreateMessage {
     pub content: String,
+    #[serde(default)]
     pub files: Vec<String>,
 }
 

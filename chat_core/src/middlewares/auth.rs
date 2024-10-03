@@ -14,7 +14,7 @@ use tracing::warn;
 
 #[derive(Debug, Deserialize)]
 struct Params {
-    access_token: String,
+    token: String,
 }
 
 pub async fn verify_token<T>(State(state): State<T>, req: Request, next: Next) -> Response
@@ -28,7 +28,7 @@ where
             Err(e) => {
                 if e.is_missing() {
                     match Query::<Params>::from_request_parts(&mut parts, &state).await {
-                        Ok(params) => params.access_token.clone(),
+                        Ok(params) => params.token.clone(),
                         Err(e) => {
                             let msg = format!("parse query params failed: {}", e);
                             warn!(msg);
@@ -36,12 +36,13 @@ where
                         }
                     }
                 } else {
-                    let msg = format!("Parse Authorization header failed: {}", e);
+                    let msg = format!("parse Authorization header failed: {}", e);
                     warn!(msg);
                     return (StatusCode::UNAUTHORIZED, msg).into_response();
                 }
             }
         };
+
     let req = match state.verify(&token) {
         Ok(user) => {
             let mut req = Request::from_parts(parts, body);
@@ -54,6 +55,7 @@ where
             return (StatusCode::FORBIDDEN, msg).into_response();
         }
     };
+
     next.run(req).await
 }
 
@@ -77,7 +79,7 @@ mod tests {
     impl TokenVerify for AppState {
         type Error = ();
 
-        fn verify(&self, token: &str) -> std::result::Result<User, Self::Error> {
+        fn verify(&self, token: &str) -> Result<User, Self::Error> {
             self.0.dk.verify(token).map_err(|_| ())
         }
     }
@@ -92,7 +94,6 @@ mod tests {
         let decoding_pem = include_str!("../../fixtures/decoding.pem");
         let ek = EncodingKey::load(encoding_pem)?;
         let dk = DecodingKey::load(decoding_pem)?;
-
         let state = AppState(Arc::new(AppStateInner { ek, dk }));
 
         let user = User::new(1, "Tyr Chen", "tchen@acme.org");
@@ -113,7 +114,7 @@ mod tests {
 
         // good token in query params
         let req = Request::builder()
-            .uri(format!("/?access_token={}", token))
+            .uri(format!("/?token={}", token))
             .body(Body::empty())?;
         let res = app.clone().oneshot(req).await?;
         assert_eq!(res.status(), StatusCode::OK);
@@ -133,7 +134,7 @@ mod tests {
 
         // bad token in query params
         let req = Request::builder()
-            .uri("/?access_token=bad-token")
+            .uri("/?token=bad-token")
             .body(Body::empty())?;
         let res = app.oneshot(req).await?;
         assert_eq!(res.status(), StatusCode::FORBIDDEN);
